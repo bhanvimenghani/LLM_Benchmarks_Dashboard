@@ -1,0 +1,174 @@
+{
+  "models": [
+    {
+      "id": "gpt-4",
+      "name": "GPT-4",
+      "provider": "OpenAI",
+      "version": "gpt-4-0613",
+      "task_scores": {
+        "code_understanding": 92.5,
+        "log_analysis": 88.3,
+        "metric_interpretation": 85.7,
+        "causal_reasoning": 91.2,
+        "pattern_recognition": 87.4,
+        "context_synthesis": 89.6,
+        "root_cause_identification": 86.8,
+        "solution_recommendation": 84.2
+      },
+      "rca_score": 88.4,
+      "metadata": {
+        "parameters": "1.76T",
+        "context_window": 8192,
+        "release_date": "2023-03-14"
+      }
+    },
+    {
+      "id": "claude-3-opus",
+      "name": "Claude-3-Opus",
+      "provider": "Anthropic",
+      "version": "claude-3-opus-20240229",
+      "task_scores": {
+        "code_understanding": 90.1,
+        "log_analysis": 91.2,
+        "metric_interpretation": 87.8,
+        "causal_reasoning": 89.7,
+        "pattern_recognition": 88.9,
+        "context_synthesis": 91.3,
+        "root_cause_identification": 88.5,
+        "solution_recommendation": 86.7
+      },
+      "rca_score": 89.1,
+      "metadata": {
+        "parameters": "Unknown",
+        "context_window": 200000,
+        "release_date": "2024-02-29"
+      }
+    },
+    {
+      "id": "gemini-pro",
+      "name": "Gemini-Pro",
+      "provider": "Google",
+      "version": "gemini-1.0-pro",
+      "task_scores": {
+        "code_understanding": 87.3,
+        "log_analysis": 85.4,
+        "metric_interpretation": 86.1,
+        "causal_reasoning": 86.1,
+        "pattern_recognition": 84.2,
+        "context_synthesis": 85.8,
+        "root_cause_identification": 83.9,
+        "solution_recommendation": 82.5
+      },
+      "rca_score": 85.2,
+      "metadata": {
+        "parameters": "Unknown",
+        "context_window": 32768,
+        "release_date": "2023-12-06"
+      }
+    },
+    {
+      "id": "llama-3-70b",
+      "name": "Llama-3-70B",
+      "provider": "Meta",
+      "version": "llama-3-70b-instruct",
+      "task_scores": {
+        "code_understanding": 82.1,
+        "log_analysis": 79.8,
+        "metric_interpretation": 81.3,
+        "causal_reasoning": 81.5,
+        "pattern_recognition": 80.6,
+        "context_synthesis": 80.2,
+        "root_cause_identification": 79.4,
+        "solution_recommendation": 78.9
+      },
+      "rca_score": 80.7,
+      "metadata": {
+        "parameters": "70B",
+        "context_window": 8192,
+        "release_date": "2024-04-18"
+      }
+    },
+    {
+      "id": "mistral-large",
+      "name": "Mistral-Large",
+      "provider": "Mistral AI",
+      "version": "mistral-large-2402",
+      "task_scores": {
+        "code_understanding": 79.8,
+        "log_analysis": 77.5,
+        "metric_interpretation": 78.9,
+        "causal_reasoning": 79.2,
+        "pattern_recognition": 77.8,
+        "context_synthesis": 78.4,
+        "root_cause_identification": 76.9,
+        "solution_recommendation": 75.6
+      },
+      "rca_score": 78.3,
+      "metadata": {
+        "parameters": "Unknown",
+        "context_window": 32768,
+        "release_date": "2024-02-26"
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "id": "code_understanding",
+      "name": "Code Understanding",
+      "description": "Ability to parse and comprehend software architecture and code structure",
+      "weight": 0.15
+    },
+    {
+      "id": "log_analysis",
+      "name": "Log Analysis",
+      "description": "Interpreting error logs, stack traces, and system logs",
+      "weight": 0.20
+    },
+    {
+      "id": "metric_interpretation",
+      "name": "Metric Interpretation",
+      "description": "Analyzing time-series data and identifying anomalies",
+      "weight": 0.15
+    },
+    {
+      "id": "causal_reasoning",
+      "name": "Causal Reasoning",
+      "description": "Determining cause-effect relationships and multi-hop reasoning",
+      "weight": 0.20
+    },
+    {
+      "id": "pattern_recognition",
+      "name": "Pattern Recognition",
+      "description": "Identifying recurring issues and patterns in data",
+      "weight": 0.10
+    },
+    {
+      "id": "context_synthesis",
+      "name": "Context Synthesis",
+      "description": "Combining information from multiple sources",
+      "weight": 0.10
+    },
+    {
+      "id": "root_cause_identification",
+      "name": "Root Cause Identification",
+      "description": "Pinpointing the underlying cause of issues",
+      "weight": 0.05
+    },
+    {
+      "id": "solution_recommendation",
+      "name": "Solution Recommendation",
+      "description": "Suggesting actionable fixes and recommendations",
+      "weight": 0.05
+    }
+  ],
+  "weights": {
+    "code_understanding": 0.15,
+    "log_analysis": 0.20,
+    "metric_interpretation": 0.15,
+    "causal_reasoning": 0.20,
+    "pattern_recognition": 0.10,
+    "context_synthesis": 0.10,
+    "root_cause_identification": 0.05,
+    "solution_recommendation": 0.05
+  }
+}

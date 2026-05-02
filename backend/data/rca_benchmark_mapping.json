@@ -1,0 +1,203 @@
+{
+  "description": "Mapping configuration for converting HuggingFace benchmarks to RCA task scores",
+  "version": "1.0.0",
+  "rca_tasks": {
+    "code_understanding": {
+      "description": "Ability to comprehend code structure, logic, and identify issues",
+      "benchmarks": [
+        {
+          "name": "HumanEval",
+          "weight": 0.5,
+          "description": "Python code generation and understanding"
+        },
+        {
+          "name": "MBPP",
+          "weight": 0.3,
+          "description": "Basic Python programming problems"
+        },
+        {
+          "name": "CodeContests",
+          "weight": 0.2,
+          "description": "Competitive programming problems"
+        }
+      ],
+      "fallback_score": 50,
+      "min_threshold": 60
+    },
+    "log_analysis": {
+      "description": "Skill in parsing and interpreting system logs and traces",
+      "benchmarks": [
+        {
+          "name": "DROP",
+          "weight": 0.4,
+          "description": "Reading comprehension with discrete reasoning"
+        },
+        {
+          "name": "SQuAD",
+          "weight": 0.3,
+          "description": "Reading comprehension"
+        },
+        {
+          "name": "BoolQ",
+          "weight": 0.3,
+          "description": "Boolean question answering"
+        }
+      ],
+      "fallback_score": 50,
+      "min_threshold": 65
+    },
+    "metric_interpretation": {
+      "description": "Understanding and analyzing performance metrics and data",
+      "benchmarks": [
+        {
+          "name": "GSM8K",
+          "weight": 0.5,
+          "description": "Grade school math problems"
+        },
+        {
+          "name": "MATH",
+          "weight": 0.3,
+          "description": "Mathematical problem solving"
+        },
+        {
+          "name": "MMLU_STEM",
+          "weight": 0.2,
+          "description": "STEM knowledge from MMLU"
+        }
+      ],
+      "fallback_score": 50,
+      "min_threshold": 70
+    },
+    "causal_reasoning": {
+      "description": "Logical deduction of cause-effect relationships",
+      "benchmarks": [
+        {
+          "name": "BBH",
+          "weight": 0.4,
+          "description": "Big-Bench Hard reasoning tasks"
+        },
+        {
+          "name": "ARC",
+          "weight": 0.3,
+          "description": "AI2 Reasoning Challenge"
+        },
+        {
+          "name": "HellaSwag",
+          "weight": 0.3,
+          "description": "Commonsense reasoning"
+        }
+      ],
+      "fallback_score": 50,
+      "min_threshold": 70
+    },
+    "pattern_recognition": {
+      "description": "Identifying recurring issues and patterns in data",
+      "benchmarks": [
+        {
+          "name": "MMLU",
+          "weight": 0.5,
+          "description": "Multitask language understanding"
+        },
+        {
+          "name": "TruthfulQA",
+          "weight": 0.3,
+          "description": "Truthfulness in answering questions"
+        },
+        {
+          "name": "Winogrande",
+          "weight": 0.2,
+          "description": "Commonsense reasoning"
+        }
+      ],
+      "fallback_score": 50,
+      "min_threshold": 65
+    },
+    "context_synthesis": {
+      "description": "Combining multiple data sources and contexts",
+      "benchmarks": [
+        {
+          "name": "DROP",
+          "weight": 0.4,
+          "description": "Multi-hop reasoning"
+        },
+        {
+          "name": "QuAC",
+          "weight": 0.3,
+          "description": "Conversational question answering"
+        },
+        {
+          "name": "CoQA",
+          "weight": 0.3,
+          "description": "Conversational question answering"
+        }
+      ],
+      "fallback_score": 50,
+      "min_threshold": 65
+    },
+    "root_cause_identification": {
+      "description": "Pinpointing the underlying issue from symptoms",
+      "benchmarks": [
+        {
+          "name": "BBH",
+          "weight": 0.4,
+          "description": "Complex reasoning tasks"
+        },
+        {
+          "name": "ARC",
+          "weight": 0.3,
+          "description": "Scientific reasoning"
+        },
+        {
+          "name": "PIQA",
+          "weight": 0.3,
+          "description": "Physical commonsense reasoning"
+        }
+      ],
+      "fallback_score": 50,
+      "min_threshold": 70
+    },
+    "solution_recommendation": {
+      "description": "Suggesting effective fixes and solutions",
+      "benchmarks": [
+        {
+          "name": "HumanEval",
+          "weight": 0.5,
+          "description": "Code generation for solutions"
+        },
+        {
+          "name": "GSM8K",
+          "weight": 0.3,
+          "description": "Problem-solving approach"
+        },
+        {
+          "name": "BBH",
+          "weight": 0.2,
+          "description": "Strategic reasoning"
+        }
+      ],
+      "fallback_score": 50,
+      "min_threshold": 65
+    }
+  },
+  "overall_rca_weights": {
+    "code_understanding": 0.15,
+    "log_analysis": 0.12,
+    "metric_interpretation": 0.13,
+    "causal_reasoning": 0.18,
+    "pattern_recognition": 0.12,
+    "context_synthesis": 0.10,
+    "root_cause_identification": 0.15,
+    "solution_recommendation": 0.05
+  },
+  "rca_score_thresholds": {
+    "excellent": 85,
+    "good": 75,
+    "acceptable": 65,
+    "needs_improvement": 50
+  },
+  "notes": {
+    "scoring": "Benchmark scores are typically 0-100. We normalize and apply weights.",
+    "fallback": "If a benchmark is missing, we use the fallback_score for that task.",
+    "threshold": "min_threshold indicates minimum score needed for RCA capability in that task."
+  }
+}

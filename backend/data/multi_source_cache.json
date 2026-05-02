@@ -1,0 +1,30 @@
+{
+  "last_updated": "2026-05-01T08:29:27.036804",
+  "refresh_method": "multi_source",
+  "models": {
+    "gpt-4o": {
+      "id": "gpt-4o",
+      "name": "GPT-4o",
+      "provider": "OpenAI",
+      "version": "gpt-4o-2024-05-13",
+      "benchmarks": {
+        "mmlu": 88.7,
+        "arc_challenge": 96.7,
+        "hellaswag": 95.3,
+        "gsm8k": 94.8,
+        "humaneval": 90.2,
+        "truthfulqa": 61.0
+      },
+      "metadata": {
+        "parameters": "Unknown",
+        "context_window": 128000,
+        "release_date": "2024-05-13"
+      },
+      "sources": [
+        "huggingface"
+      ],
+      "confidence_score": 30.0,
+      "last_updated": "2026-05-01T08:29:24.011345"
+    }
+  }
+}
