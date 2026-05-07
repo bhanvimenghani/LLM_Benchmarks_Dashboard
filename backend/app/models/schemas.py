@@ -18,6 +18,7 @@ class ModelMetadata(BaseModel):
     parameters: str
     context_window: int = Field(..., gt=0, description="Context window size")
     release_date: str
+    benchmarks: Optional[Dict[str, float]] = None  # Raw benchmark scores
 
 
 class Model(BaseModel):

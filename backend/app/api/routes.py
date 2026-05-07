@@ -366,7 +366,7 @@ async def get_categories():
 
 
 @router.get("/leaderboard/{category}")
-async def get_category_leaderboard(category: str, ascending: bool = False):
+async def get_category_leaderboard(category: str, ascending: bool = False, limit: Optional[int] = None):
     """
     Get leaderboard for a specific category
     
@@ -375,6 +375,7 @@ async def get_category_leaderboard(category: str, ascending: bool = False):
     
     Query Parameters:
         - ascending: Sort in ascending order if true, descending if false (default)
+        - limit: Maximum number of models to return (default: 6 for RCA, unlimited for others)
     
     Returns:
         Leaderboard with models ranked by category-specific score
@@ -383,42 +384,37 @@ async def get_category_leaderboard(category: str, ascending: bool = False):
         # Get the calculator for this category
         calculator = get_calculator(category)
         
-        # Get models with benchmark data from fetcher
-        from ..services.benchmark_fetcher import BenchmarkFetcher
-        fetcher = BenchmarkFetcher()
-        processed_models = fetcher.get_cached_models()
-        
-        # If cache is empty, fetch fresh data
-        if not processed_models:
-            processed_models = fetcher.fetch_and_process_models()
+        # Get models from data service (uses live data)
+        all_models = data_service.get_all_models()
         
         # Calculate category scores for each model
         models_with_scores = []
-        for model_data in processed_models:
-            # Get benchmark scores
-            benchmarks = model_data.get('task_scores', {})
+        for model in all_models:
+            # Get benchmark scores from model data
+            benchmarks = {}
             
-            # For non-RCA categories, we need the raw benchmark scores
-            # Extract from metadata if available
-            if 'metadata' in model_data and 'benchmarks' in model_data['metadata']:
-                benchmarks = model_data['metadata']['benchmarks']
-            elif 'benchmarks' in model_data:
-                benchmarks = model_data['benchmarks']
-            else:
-                # Skip models without benchmark data
+            # Try to get benchmarks from metadata first
+            if hasattr(model, 'metadata') and model.metadata:
+                if hasattr(model.metadata, 'benchmarks') and model.metadata.benchmarks:
+                    benchmarks = model.metadata.benchmarks
+                elif isinstance(model.metadata, dict) and 'benchmarks' in model.metadata:
+                    benchmarks = model.metadata['benchmarks']
+            
+            # Skip models without benchmark data
+            if not benchmarks:
                 continue
             
             # Calculate category score
             category_score = calculator.calculate_score(benchmarks)
             
             models_with_scores.append({
-                'id': model_data['id'],
-                'name': model_data['name'],
-                'provider': model_data['provider'],
-                'version': model_data.get('version', 'latest'),
+                'id': model.id,
+                'name': model.name,
+                'provider': model.provider,
+                'version': model.version if hasattr(model, 'version') else 'latest',
                 'category_score': category_score,
-                'rca_score': model_data.get('rca_score', 0),
-                'metadata': model_data.get('metadata', {}),
+                'rca_score': model.rca_score,
+                'metadata': model.metadata.dict() if hasattr(model.metadata, 'dict') else (model.metadata if model.metadata else {}),
                 'benchmarks': benchmarks
             })
         
@@ -427,6 +423,13 @@ async def get_category_leaderboard(category: str, ascending: bool = False):
             key=lambda x: x['category_score'],
             reverse=not ascending
         )
+        
+        # Apply default limit of 6 for all categories
+        if limit is None:
+            limit = 6
+        
+        # Apply limit
+        models_with_scores = models_with_scores[:limit]
         
         # Create leaderboard entries
         leaderboard = [
@@ -454,7 +457,8 @@ async def get_category_leaderboard(category: str, ascending: bool = False):
             'category_name': calculator.get_category_name(),
             'category_description': calculator.get_category_description(),
             'leaderboard': leaderboard,
-            'count': len(leaderboard)
+            'count': len(leaderboard),
+            'total_models': len(models_with_scores) if limit is None else len(leaderboard)
         }
         
     except ValueError as e:
@@ -587,53 +591,38 @@ async def get_model_sources(model_id: str):
         List of sources that provided data for this model with confidence scores
     """
     try:
-        # Load multi-source cache if available
-        import json
-        try:
-            with open('data/multi_source_cache.json', 'r') as f:
-                cache = json.load(f)
-                if model_id in cache.get('models', {}):
-                    model_data = cache['models'][model_id]
-                    return {
-                        'model_id': model_id,
-                        'model_name': model_data.get('name'),
-                        'sources': model_data.get('sources', ['huggingface']),
-                        'confidence_score': model_data.get('confidence_score', 0),
-                        'last_updated': model_data.get('last_updated'),
-                        'benchmarks': {
-                            name: {
-                                'value': value,
-                                'source': 'aggregated'
-                            }
-                            for name, value in model_data.get('benchmarks', {}).items()
-                        }
-                    }
-        except FileNotFoundError:
-            pass
+        # Get model from data service
+        model = data_service.get_model_by_id(model_id)
         
-        # Fallback to regular cache
-        from ..services.benchmark_fetcher import BenchmarkFetcher
-        fetcher = BenchmarkFetcher()
-        models = fetcher.get_cached_models()
+        if not model:
+            raise HTTPException(status_code=404, detail=f"Model {model_id} not found")
         
-        for model in models:
-            if model['id'] == model_id:
-                return {
-                    'model_id': model_id,
-                    'model_name': model.get('name'),
-                    'sources': [model.get('source', 'huggingface')],
-                    'confidence_score': 75.0,  # Default confidence
-                    'last_updated': model.get('last_updated'),
-                    'benchmarks': {
-                        name: {
-                            'value': value,
-                            'source': 'single_source'
-                        }
-                        for name, value in model.get('benchmarks', {}).items()
-                    }
+        # Extract benchmarks from model metadata
+        benchmarks = {}
+        if hasattr(model, 'metadata') and model.metadata:
+            if isinstance(model.metadata, dict) and 'benchmarks' in model.metadata:
+                benchmarks = model.metadata['benchmarks']
+            elif hasattr(model.metadata, 'dict'):
+                metadata_dict = model.metadata.dict()
+                benchmarks = metadata_dict.get('benchmarks', {})
+        
+        # Determine source
+        source = getattr(model, 'source', 'huggingface')
+        
+        return {
+            'model_id': model_id,
+            'model_name': model.name,
+            'sources': [source],
+            'confidence_score': 85.0 if source in ['huggingface', 'lmsys'] else 75.0,
+            'last_updated': getattr(model, 'last_updated', datetime.now().isoformat()),
+            'benchmarks': {
+                name: {
+                    'value': value,
+                    'source': source
                 }
-        
-        raise HTTPException(status_code=404, detail=f"Model {model_id} not found")
+                for name, value in benchmarks.items()
+            }
+        }
         
     except HTTPException:
         raise

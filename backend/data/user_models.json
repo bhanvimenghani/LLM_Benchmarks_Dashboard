@@ -1,3 +1,29 @@
 {
-  "models": []
+  "models": [
+    {
+      "id": "deepseek-v4-pro",
+      "name": "DeepSeek-V4-Pro",
+      "provider": "deepseek-ai",
+      "version": "latest",
+      "task_scores": {
+        "code_understanding": 50.0,
+        "log_analysis": 50.0,
+        "metric_interpretation": 92.6,
+        "causal_reasoning": 50.0,
+        "pattern_recognition": 87.5,
+        "context_synthesis": 50.0,
+        "root_cause_identification": 50.0,
+        "solution_recommendation": 92.6
+      },
+      "rca_score": 62.2,
+      "metadata": {
+        "parameters": "284B parameters",
+        "context_window": 8192,
+        "release_date": "2026-05-07",
+        "benchmarks": null
+      },
+      "source": "huggingface",
+      "last_updated": "2026-05-07T13:58:47.891813"
+    }
+  ]
 }

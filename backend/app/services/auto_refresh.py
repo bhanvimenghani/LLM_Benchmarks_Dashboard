@@ -1,6 +1,6 @@
 """
 Automated Refresh System
-Implements Vellum's approach: scheduled updates and real-time data refresh
+Monthly refresh schedule for leaderboard data
 """
 
 import asyncio
@@ -8,8 +8,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import Optional
 import json
-from .multi_source_fetcher import MultiSourceFetcher
-from .benchmark_fetcher import BenchmarkFetcher
+from .multi_provider_fetcher import MultiProviderFetcher
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -18,29 +17,33 @@ logger = logging.getLogger(__name__)
 class AutoRefreshService:
     """
     Automated refresh service for keeping leaderboard data up-to-date
-    Similar to Vellum's continuous update system
+    Refreshes data monthly (30 days)
     """
     
     def __init__(
         self,
-        refresh_interval_hours: int = 24,
+        refresh_interval_days: int = 30,
         enable_multi_source: bool = True
     ):
         """
         Initialize auto-refresh service
         
         Args:
-            refresh_interval_hours: Hours between automatic refreshes
+            refresh_interval_days: Days between automatic refreshes (default: 30)
             enable_multi_source: Use multi-source fetching (Vellum approach)
         """
-        self.refresh_interval = timedelta(hours=refresh_interval_hours)
+        self.refresh_interval = timedelta(days=refresh_interval_days)
         self.enable_multi_source = enable_multi_source
         self.last_refresh = None
         self.is_running = False
         
-        # Initialize fetchers
-        self.multi_source_fetcher = MultiSourceFetcher() if enable_multi_source else None
-        self.benchmark_fetcher = BenchmarkFetcher()
+        # Initialize fetcher
+        self.fetcher = MultiProviderFetcher(
+            include_huggingface=True,
+            include_lmsys=True,
+            include_gemini=False,
+            include_claude=False
+        )
         
         # Refresh status
         self.status = {
@@ -48,6 +51,7 @@ class AutoRefreshService:
             'next_refresh': None,
             'models_updated': 0,
             'status': 'idle',
+            'refresh_reason': None,
             'errors': []
         }
     
@@ -58,16 +62,17 @@ class AutoRefreshService:
             return
         
         self.is_running = True
-        logger.info(f"Starting auto-refresh service (interval: {self.refresh_interval})")
+        logger.info(f"Starting auto-refresh service")
+        logger.info(f"  - Refresh interval: {self.refresh_interval.days} days")
         
         # Run initial refresh
-        await self.refresh_data()
+        await self.refresh_data(reason="initial_startup")
         
-        # Schedule periodic refreshes
+        # Schedule monthly refreshes
         while self.is_running:
             await asyncio.sleep(self.refresh_interval.total_seconds())
             if self.is_running:
-                await self.refresh_data()
+                await self.refresh_data(reason="scheduled_monthly")
     
     async def stop(self):
         """Stop the auto-refresh service"""
@@ -75,30 +80,28 @@ class AutoRefreshService:
         self.is_running = False
         self.status['status'] = 'stopped'
     
-    async def refresh_data(self):
+    async def refresh_data(self, reason: str = "manual"):
         """
         Refresh all model data from sources
         Implements Vellum's multi-source validation approach
+        
+        Args:
+            reason: Reason for refresh (for logging)
         """
         logger.info("=" * 60)
-        logger.info("Starting data refresh...")
+        logger.info(f"Starting data refresh (reason: {reason})...")
         logger.info("=" * 60)
         
         self.status['status'] = 'refreshing'
+        self.status['refresh_reason'] = reason
         self.status['errors'] = []
         start_time = datetime.utcnow()
         
         try:
-            if self.enable_multi_source and self.multi_source_fetcher:
-                # Use multi-source fetching with live HuggingFace data
-                logger.info("Using multi-source fetching with live HuggingFace API")
-                models = self.multi_source_fetcher.fetch_all_models()
-                logger.info(f"✓ Successfully fetched {len(models)} models from multiple sources")
-            else:
-                # Fallback to benchmark cache
-                logger.info("Using benchmark data from cache (real data)")
-                models = self.benchmark_fetcher.fetch_and_process_models()
-                logger.info(f"✓ Successfully refreshed {len(models)} models")
+            # Use multi-provider fetching with live data
+            logger.info("Fetching live data from HuggingFace and LMSYS Arena")
+            models = self.fetcher.fetch_all_models()
+            logger.info(f"✓ Successfully fetched {len(models)} models from live APIs")
             self.status['models_updated'] = len(models)
             
             # Update status
@@ -147,7 +150,7 @@ class AutoRefreshService:
     async def force_refresh(self):
         """Force an immediate refresh"""
         logger.info("Force refresh requested")
-        await self.refresh_data()
+        await self.refresh_data(reason="manual_force")
 
 
 # Global instance
@@ -159,8 +162,8 @@ def get_auto_refresh_service() -> AutoRefreshService:
     global _auto_refresh_service
     if _auto_refresh_service is None:
         _auto_refresh_service = AutoRefreshService(
-            refresh_interval_hours=24,  # Daily refresh
-            enable_multi_source=True    # Use Vellum approach
+            refresh_interval_days=30,       # Monthly refresh
+            enable_multi_source=True        # Use Vellum approach
         )
     return _auto_refresh_service
 
@@ -181,7 +184,7 @@ async def stop_auto_refresh():
 if __name__ == "__main__":
     async def main():
         service = AutoRefreshService(
-            refresh_interval_hours=24,
+            refresh_interval_days=30,
             enable_multi_source=True
         )
         

@@ -7,9 +7,10 @@ import logging
 from typing import Dict, List, Optional
 from datetime import datetime
 from .huggingface_live import HuggingFaceLiveFetcher
-from .lmsys_fetcher import LMSYSFetcher
-from .gemini_service import GeminiService
-from .claude_service import ClaudeService
+from .lmsys_live_fetcher import LMSYSLiveFetcher
+# Note: Gemini and Claude services are optional and not currently implemented
+# from .gemini_service import GeminiService
+# from .claude_service import ClaudeService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -44,9 +45,10 @@ class MultiProviderFetcher:
         
         # Initialize services
         self.hf_fetcher = HuggingFaceLiveFetcher() if include_huggingface else None
-        self.lmsys_fetcher = LMSYSFetcher() if include_lmsys else None
-        self.gemini_service = GeminiService() if include_gemini else None
-        self.claude_service = ClaudeService() if include_claude else None
+        self.lmsys_fetcher = LMSYSLiveFetcher() if include_lmsys else None
+        # Gemini and Claude services are optional and not currently implemented
+        self.gemini_service = None  # GeminiService() if include_gemini else None
+        self.claude_service = None  # ClaudeService() if include_claude else None
         
     def fetch_all_models(self) -> List[Dict]:
         """
@@ -107,40 +109,44 @@ class MultiProviderFetcher:
                 logger.error(f"✗ Failed to fetch from LMSYS: {e}")
         
         # Fetch from Google Gemini (fallback if LMSYS didn't get them)
+        # Note: Currently disabled - Gemini models are fetched via LMSYS
         if self.include_gemini and self.gemini_service:
             try:
                 logger.info("\n[3/4] Fetching from Google Gemini (fallback)...")
-                gemini_models = self.gemini_service.fetch_gemini_models()
+                gemini_models = self.gemini_service.fetch_gemini_models()  # type: ignore
                 
-                # Add source tag to each model
-                for model in gemini_models:
-                    model['source'] = 'gemini'
-                    if 'metadata' not in model:
-                        model['metadata'] = {}
-                    model['metadata']['provider_type'] = 'proprietary'
-                
-                all_models.extend(gemini_models)
-                fetch_summary['gemini'] = len(gemini_models)
-                logger.info(f"✓ Fetched {len(gemini_models)} models from Google Gemini")
+                if gemini_models:
+                    # Add source tag to each model
+                    for model in gemini_models:  # type: ignore
+                        model['source'] = 'gemini'
+                        if 'metadata' not in model:
+                            model['metadata'] = {}
+                        model['metadata']['provider_type'] = 'proprietary'
+                    
+                    all_models.extend(gemini_models)
+                    fetch_summary['gemini'] = len(gemini_models)
+                    logger.info(f"✓ Fetched {len(gemini_models)} models from Google Gemini")
             except Exception as e:
                 logger.error(f"✗ Failed to fetch from Gemini: {e}")
         
         # Fetch from Anthropic Claude (fallback if LMSYS didn't get them)
+        # Note: Currently disabled - Claude models are fetched via LMSYS
         if self.include_claude and self.claude_service:
             try:
                 logger.info("\n[4/4] Fetching from Anthropic Claude (fallback)...")
-                claude_models = self.claude_service.fetch_claude_models()
+                claude_models = self.claude_service.fetch_claude_models()  # type: ignore
                 
-                # Add source tag to each model
-                for model in claude_models:
-                    model['source'] = 'claude'
-                    if 'metadata' not in model:
-                        model['metadata'] = {}
-                    model['metadata']['provider_type'] = 'proprietary'
-                
-                all_models.extend(claude_models)
-                fetch_summary['claude'] = len(claude_models)
-                logger.info(f"✓ Fetched {len(claude_models)} models from Anthropic Claude")
+                if claude_models:
+                    # Add source tag to each model
+                    for model in claude_models:  # type: ignore
+                        model['source'] = 'claude'
+                        if 'metadata' not in model:
+                            model['metadata'] = {}
+                        model['metadata']['provider_type'] = 'proprietary'
+                    
+                    all_models.extend(claude_models)
+                    fetch_summary['claude'] = len(claude_models)
+                    logger.info(f"✓ Fetched {len(claude_models)} models from Anthropic Claude")
             except Exception as e:
                 logger.error(f"✗ Failed to fetch from Claude: {e}")
         
@@ -164,7 +170,7 @@ class MultiProviderFetcher:
         Get models from a specific provider
         
         Args:
-            provider: Provider name ('huggingface', 'gemini', 'claude')
+            provider: Provider name ('huggingface', 'lmsys', 'gemini', 'claude')
             
         Returns:
             List of models from the specified provider
@@ -177,17 +183,29 @@ class MultiProviderFetcher:
                 model['source'] = 'huggingface'
             return models
         
-        elif provider == 'gemini' and self.gemini_service:
-            models = self.gemini_service.fetch_gemini_models()
+        elif provider == 'lmsys' and self.lmsys_fetcher:
+            models = self.lmsys_fetcher.fetch_lmsys_models()
             for model in models:
-                model['source'] = 'gemini'
+                model['source'] = 'lmsys'
             return models
         
+        elif provider == 'gemini' and self.gemini_service:
+            # Note: Gemini service not currently implemented
+            models = self.gemini_service.fetch_gemini_models()  # type: ignore
+            if models:
+                for model in models:  # type: ignore
+                    model['source'] = 'gemini'
+                return models
+            return []
+        
         elif provider == 'claude' and self.claude_service:
-            models = self.claude_service.fetch_claude_models()
-            for model in models:
-                model['source'] = 'claude'
-            return models
+            # Note: Claude service not currently implemented
+            models = self.claude_service.fetch_claude_models()  # type: ignore
+            if models:
+                for model in models:  # type: ignore
+                    model['source'] = 'claude'
+                return models
+            return []
         
         else:
             raise ValueError(f"Unknown or disabled provider: {provider}")

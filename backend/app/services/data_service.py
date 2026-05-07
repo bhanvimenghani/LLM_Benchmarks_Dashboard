@@ -72,7 +72,8 @@ class DataService:
                 processed_models = []
                 for model_data in models:
                     # Map benchmarks to RCA task scores
-                    task_scores = self._map_benchmarks_to_rca_tasks(model_data.get('benchmarks', {}))
+                    benchmarks = model_data.get('benchmarks', {})
+                    task_scores = self._map_benchmarks_to_rca_tasks(benchmarks)
                     
                     # Calculate RCA score
                     rca_score = self.rca_calculator.calculate_rca_score(task_scores)
@@ -82,6 +83,13 @@ class DataService:
                     model_data['rca_score'] = rca_score
                     model_data['id'] = model_data.get('model_id', model_data.get('id', ''))
                     model_data['name'] = model_data.get('model_name', model_data.get('name', ''))
+                    
+                    # Store benchmarks in metadata for category calculations
+                    if 'metadata' not in model_data:
+                        model_data['metadata'] = {}
+                    if isinstance(model_data['metadata'], dict):
+                        model_data['metadata']['benchmarks'] = benchmarks
+                    
                     processed_models.append(model_data)
                 
                 print(f"✅ Successfully fetched {len(processed_models)} models from LIVE HuggingFace API")
